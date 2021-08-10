@@ -17,11 +17,8 @@
 
   // Include Files
 #include "Arduino.h"
-#include <Wire.h>
+#include "Wire\src\Wire.h"
 #include "IQS7222_addresses.h"
-
-// Temporary for development
-#include <cstdint>
 
 #define STOP true
 #define RESTART false

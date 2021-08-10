@@ -86,7 +86,7 @@ bool IQS7222::requestComms(void)
     bool response = false;        // The return value. Is set to true if a response is received within 100ms.
     uint16_t notReadyCount = 0;  // Increments every time the loop executes to keep track of how long the request is going on.
 
-    // Pull the ready bus LOW to let the IQS266 device know you want to communicate.
+    // Pull the ready bus LOW to let the IQS7222 device know you want to communicate.
     toggleReady();
 
     // Wait for the IQS266 to respond by pulling the ready bus LOW. Redo request every 10ms, return false after 100ms.
