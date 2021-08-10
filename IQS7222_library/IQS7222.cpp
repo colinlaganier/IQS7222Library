@@ -50,7 +50,7 @@ bool IQS7222::begin(uint8_t deviceAddressIn, uint8_t readyPinIn)
     if (response)
     {
         acknowledgeReset(RESTART);
-        autoTune(STOP);
+        //autoTune(STOP);
     }
     return response;
 }
@@ -89,7 +89,7 @@ bool IQS7222::requestComms(void)
     // Pull the ready bus LOW to let the IQS7222 device know you want to communicate.
     toggleReady();
 
-    // Wait for the IQS266 to respond by pulling the ready bus LOW. Redo request every 10ms, return false after 100ms.
+    // Wait for the IQS7222 to respond by pulling the ready bus LOW. Redo request every 10ms, return false after 100ms.
     while (digitalRead(_readyPin))
     {
         notReadyCount++;
@@ -100,11 +100,90 @@ bool IQS7222::requestComms(void)
         if ((notReadyCount % 100) == 0)
             toggleReady();
     }
-    // If the processing reaches this point then a response has been received.
     response = true;
     return response;
 }
 
+
 /**************************************************************************************************************/
 /*                                              PRIVATE METHODS                                               */
 /**************************************************************************************************************/
+
+/**
+  * @name   toggleReady
+  * @brief  A method which toggles the READY pin of an IQS7222 device.
+  * @param  None.
+  * @retval None.
+  * @notes  Change pin to OUTPUT, pull LOW, delay, pull HIGH, change pin back to INPUT.
+  */
+void IQS7222::toggleReady(void)
+{
+    pinMode(_readyPin, OUTPUT);
+    digitalWrite(_readyPin, LOW);
+    delay(5);
+    digitalWrite(_readyPin, HIGH);
+    pinMode(_readyPin, INPUT);
+}
+
+void IQS7222::readRandomBytes(uint16_t memoryAddress, uint8_t numBytes, uint8_t bytesArray[], bool stopOrRestart)
+{
+    uint8_t i = 0;  // A simple counter to assist with loading bytes into the user supplied array.
+
+    // Select the device with the address of "_deviceAddress" and start communication.
+    Wire.beginTransmission(_deviceAddress);
+    
+    // Verifies if 8bit or 16bit address
+    if (memoryAddress > 0xFF)
+    {
+        // Send a byte asking for the "memoryAddress" register 
+        Wire.write(memoryAddress);
+    }
+    else
+    {
+        // Send two bytes asking for the "memoryAddress" register in little endian byte order
+        Wire.write(memoryAddress & 0xFF);
+        Wire.write(memoryAddress & 0xFF00 >> 8);
+    }
+
+    // Complete the selection and communication initialization.
+    Wire.endTransmission(RESTART);  // Restart transmission for reading that follows.
+
+    // Request "numBytes" bytes from the device which has address "_deviceAddress"
+    do
+    {
+        Wire.requestFrom(_deviceAddress, numBytes, stopOrRestart);
+    } while (Wire.available() == 0);  // Wait for response, this sometimes takes a few attempts
+
+    // Load the received bytes into the array until there are no more 
+    while (Wire.available())
+    {
+        // Load the received bytes into the user supplied array
+        bytesArray[i] = Wire.read();
+        i++;
+    }
+}
+
+void IQS7222::writeRandomBytes(uint16_t memoryAddress, uint8_t numBytes, uint8_t bytesArray[], bool stopOrRestart)
+{
+    // Select the device with the address of "_deviceAddress" and start communication.
+    Wire.beginTransmission(_deviceAddress);
+    // Verifies if 8bit or 16bit address
+    if (memoryAddress > 0xFF)
+    {
+        // Send a byte asking for the "memoryAddress" register 
+        Wire.write(memoryAddress);
+    }
+    else
+    {
+        // Send two bytes asking for the "memoryAddress" register in little endian byte order.
+        Wire.write(memoryAddress & 0xFF);
+        Wire.write(memoryAddress & 0xFF00 >> 8);
+    }
+    // Write the bytes as specified in the array which "arrayAddress" pointer points to.
+    for (int i = 0; i < numBytes; i++)
+    {
+        Wire.write(bytesArray[i]);
+    }
+    // End the transmission, user decides to STOP or RESTART.
+    Wire.endTransmission(stopOrRestart);
+}

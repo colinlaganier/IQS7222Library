@@ -39,6 +39,9 @@ private:
 
 	// Private methods
 	void toggleReady(void);
+	void readRandomBytes(uint16_t memoryAddress, uint8_t numBytes, uint8_t bytesArray[], bool stopOrRestart);
+	void writeRandomBytes(uint16_t memoryAddress, uint8_t numBytes, uint8_t bytesArray[], bool stopOrRestart);
+
 };
 
 #endif
