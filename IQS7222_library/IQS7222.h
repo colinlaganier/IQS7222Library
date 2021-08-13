@@ -30,7 +30,9 @@ public:
 	bool begin(uint8_t deviceAddressIn, uint8_t readyPinIn);
 	bool beginHeadless(uint8_t deviceAddressIn);
 	bool requestComms(void);
-
+	bool checkReset(bool stopOrRestart);
+	void acknowledgeReset(bool stopOrRestart);
+	void autoTune(bool stopOrRestart);
 
 private:
 	// Private variables

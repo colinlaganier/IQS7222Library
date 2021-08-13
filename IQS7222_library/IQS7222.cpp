@@ -104,6 +104,47 @@ bool IQS7222::requestComms(void)
     return response;
 }
 
+/**
+  * @name checkReset
+  * @brief  A method which checks if the device has reset and returns the reset status.
+  * @param  None.
+  * @retval Returns true if a reset has occurred, false if no reset has occurred.
+  * @notes  If a reset has occurred the device settings should be reloaded using the begin function.
+  *     After new device settings have been reloaded the acknowledge reset function can be used
+  *     to clear the reset flag.
+  */
+bool IQS7222::checkReset(bool stopOrRestart)
+{
+    uint8_t transferBytes[1]; // A temporary array to hold the byte to be transferred.
+    // Read the System Flags from the IQS7222.
+    readRandomBytes(SYS_FLAGS, 1, transferBytes, stopOrRestart);
+    transferBytes[0] &= SHOW_RESET_BIT;
+    // Return the reset status.
+    if (transferBytes[0] != 0)
+        return true;
+    else
+        return false;
+}
+
+/**
+  * @name acknowledgeReset
+  * @brief  A method which clears the Show Reset bit by writing it to a 0.
+  * @param  None.
+  * @retval None.
+  * @notes  If a reset has occurred the device settings should be reloaded using the begin function.
+  *     After new device settings have been reloaded this method should be used to clear the
+  *     reset bit.
+  */
+void IQS7222::acknowledgeReset(bool stopOrRestart)
+{
+    uint8_t transferBytes[2]; // A temporary array to hold the bytes to be transferred.
+    readRandomBytes(PROXSETTINGS_23, 2, transferBytes, RESTART);
+    // Write the Ack Reset bit to 1 to clear the Show Reset Flag.
+    transferBytes[1] |= ACK_RESET_BIT;
+    // Write the new byte to the System Flags address.
+    writeRandomBytes(PROXSETTINGS_23, 2, transferBytes, stopOrRestart);
+}
+
 
 /**************************************************************************************************************/
 /*                                              PRIVATE METHODS                                               */
