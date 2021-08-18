@@ -89,4 +89,109 @@
 #define BUTTON9_SETUP 0x9900
 
 // Channel Setup
+// Channel 0 Setup
+#define CH0_GENERAL 0xA000
+#define CH0_ATI 0xA001
+#define CH0_MULTIPLIERS 0xA002
+#define CH0_REF_SETTINGS0 0xA003
+#define CH0_REF_SETTINGS1 0xA004
+// Channel 1 Setup
+#define CH1_GENERAL 0xA100
+#define CH1_ATI 0xA101
+#define CH1_MULTIPLIERS 0xA102
+#define CH1_REF_SETTINGS0 0xA103
+#define CH1_REF_SETTINGS1 0xA104
+// Channel 2 Setup
+#define CH2_GENERAL 0xA200
+#define CH2_ATI 0xA201
+#define CH2_MULTIPLIERS 0xA202
+#define CH2_REF_SETTINGS0 0xA203
+#define CH2_REF_SETTINGS1 0xA204
+// Channel 3 Setup
+#define CH3_GENERAL 0xA300
+#define CH3_ATI 0xA301
+#define CH3_MULTIPLIERS 0xA302
+#define CH3_REF_SETTINGS0 0xA303
+#define CH3_REF_SETTINGS1 0xA304
+// Channel 4 Setup
+#define CH4_GENERAL 0x400
+#define CH4_ATI 0x401
+#define CH4_MULTIPLIERS 0x402
+#define CH4_REF_SETTINGS0 0x403
+#define CH4_REF_SETTINGS1 0x404
+// Channel 5 Setup
+#define CH5_GENERAL 0xA500
+#define CH5_ATI 0xA501
+#define CH5_MULTIPLIERS 0xA502
+#define CH5_REF_SETTINGS0 0xA503
+#define CH5_REF_SETTINGS1 0xA504
+// Channel 6 Setup
+#define CH6_GENERAL 0xA600
+#define CH6_ATI 0xA601
+#define CH6_MULTIPLIERS 0xA602
+#define CH6_REF_SETTINGS0 0xA603
+#define CH6_REF_SETTINGS1 0xA604
+// Channel 2 Setup
+#define CH7_GENERAL 0xA700
+#define CH7_ATI 0xA701
+#define CH7_MULTIPLIERS 0xA702
+#define CH7_REF_SETTINGS0 0xA703
+#define CH7_REF_SETTINGS1 0xA704
+// Channel 3 Setup
+#define CH8_GENERAL 0xA800
+#define CH8_ATI 0xA801
+#define CH8_MULTIPLIERS 0xA802
+#define CH8_REF_SETTINGS0 0xA803
+#define CH8_REF_SETTINGS1 0xA804
+// Channel 9 Setup
+#define CH9_GENERAL 0x900
+#define CH9_ATI 0x901
+#define CH9_MULTIPLIERS 0x902
+#define CH9_REF_SETTINGS0 0x903
+#define CH9_REF_SETTINGS1 0x904
 
+// Filter Betas 
+#define FILTER_BETA 0xAA00
+#define FAST_FILTER_BETA 0xAA01
+
+// Slider Settings
+// Slider 0 Setup
+#define SLIDER0_GENERAL 0xB000
+#define SLIDER0_CALIBRATION 0xB001
+#define SLIDER0_SPEED 0xB002		//16-bit int
+#define SLIDER0_RESOLUTION 0xB003	//16-bit int
+#define SLIDER0_MASK 0xB004
+#define SLIDER0_STATUS 0xB005
+#define SLIDER0_DELTA0 0xB006
+#define SLIDER0_DELTA1 0xB007
+#define SLIDER0_DELTA2 0xB008
+#define SLIDER0_DELTA3 0xB009
+// Slider 1 Setup
+#define SLIDER1_GENERAL 0xB100
+#define SLIDER1_CALIBRATION 0xB101
+#define SLIDER1_SPEED 0xB102		//16-bit int
+#define SLIDER1_RESOLUTION 0xB103	//16-bit int
+#define SLIDER1_MASK 0xB104
+#define SLIDER1_STATUS 0xB105
+#define SLIDER1_DELTA0 0xB106
+#define SLIDER1_DELTA1 0xB107
+#define SLIDER1_DELTA2 0xB108
+#define SLIDER1_DELTA3 0xB109
+
+// GPIO0 Settings
+#define GPIO0_GENERAL 0xC000
+#define GPIO0_MASK 0xC004
+#define GPIO0_STATUS 0xC005
+
+// PMU & System Settings
+#define CONTROL_SETTING 0xD0
+#define ATI_TIMEOUT 0xD1		//16-bit int
+#define ATI_REPORT 0xD2			//16-bit int
+#define NP_TIMEOUT 0xD3			//16-bit int
+#define NP_REPORT 0xD4			//16-bit int
+#define LP_TIMEOUT 0xD5			//16-bit int
+#define LP_REPORT 0xD6			//16-bit int
+#define	ULP_UPDATE_RATE 0xD7	//16-bit int
+#define ULP_REPORT 0xD8			//16-bit int
+#define EVENT_SETUP 0xD9
+#define I2C_SETUP 0xDA
