@@ -138,12 +138,68 @@ bool IQS7222::checkReset(bool stopOrRestart)
 void IQS7222::acknowledgeReset(bool stopOrRestart)
 {
     uint8_t transferBytes[2]; // A temporary array to hold the bytes to be transferred.
-    readRandomBytes(PROXSETTINGS_23, 2, transferBytes, RESTART);
+    readRandomBytes(CONTROL_SETTING, 2, transferBytes, RESTART);
     // Write the Ack Reset bit to 1 to clear the Show Reset Flag.
-    transferBytes[1] |= ACK_RESET_BIT;
+    transferBytes[0] |= ACK_RESET_BIT;
     // Write the new byte to the System Flags address.
-    writeRandomBytes(PROXSETTINGS_23, 2, transferBytes, stopOrRestart);
+    writeRandomBytes(CONTROL_SETTING, 2, transferBytes, stopOrRestart);
 }
+
+/**
+  * @name   autoTune
+  * @brief  A method which sets the REDO_ATI_BIT in order to force the IQS7222 device to run the
+  *         Automatic Tuning Implementation (ATI) routine.
+  * @param  None.
+  * @retval None.
+  * @notes  To force ATI, bit 3 in CONTROL_SETTING is set.
+  */
+void IQS7222::autoTune(bool stopOrRestart)
+{
+    uint8_t transferByte[1]; // Array to store the bytes transferred.
+
+    readRandomBytes(CONTROL_SETTING, 1, transferByte, RESTART);
+    // Mask the settings with the REDO_ATI_BIT.
+    transferByte[0] |= REDO_ATI_BIT;  // This is the bit required to start an ATI routine.
+    // Write the new byte to the required device.
+    writeRandomBytes(CONTROL_SETTING, 1, transferByte, stopOrRestart);
+}
+
+/**
+  * @name   softReset
+  * @brief  A method which sets the DO_RESET_BIT in order to force the IQS7222 device to reset device.
+  * @param  None.
+  * @retval None.
+  * @notes  To force reset, bit 1 in CONTROL_SETTING is set.
+  */
+void IQS7222::softReset(bool stopOrRestart)
+{
+    uint8_t transferByte[1]; // Array to store the bytes transferred.
+
+    readRandomBytes(CONTROL_SETTING, 1, transferByte, RESTART);
+    // Mask the settings with the REDO_ATI_BIT.
+    transferByte[0] |= REDO_ATI_BIT;  // This is the bit required to start an ATI routine.
+    // Write the new byte to the required device.
+    writeRandomBytes(CONTROL_SETTING, 1, transferByte, stopOrRestart);
+}
+
+/**
+  * @name   printCounts
+  * @brief  A method which reads the current channel counts and prints them in the Serial Monitor
+  * @param  None.
+  * @retval None.
+  * @notes  None.
+  */
+void IQS7222::printCounts(bool stopOrRestart)
+{
+    uint8_t transferByte[10]; // Array to store the bytes transferred.
+    readRandomBytes(CH0_COUNTS, 10, transferByte, STOP);
+    for (const uint8_t &count : transferByte)
+    {
+        Serial.print(count);
+        Serial.print(", ");
+    }
+}
+
 
 
 /**************************************************************************************************************/
@@ -228,3 +284,9 @@ void IQS7222::writeRandomBytes(uint16_t memoryAddress, uint8_t numBytes, uint8_t
     // End the transmission, user decides to STOP or RESTART.
     Wire.endTransmission(stopOrRestart);
 }
+
+void IQS7222::initialSetup(bool stopOrRestart)
+{
+
+}
+
