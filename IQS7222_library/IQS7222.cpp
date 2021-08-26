@@ -13,6 +13,7 @@
 
   // Include Files
 #include "IQS7222.h"
+#include "IQS7222C_arduino_init.h"
 
 /**************************************************************************************************************/
 /*                                                CONSTRUCTORS                                                */
@@ -49,7 +50,10 @@ bool IQS7222::begin(uint8_t deviceAddressIn, uint8_t readyPinIn)
     response = requestComms();
     if (response)
     {
+        Serial.println("Initial Setup Begin");
         acknowledgeReset(RESTART);
+        initialSetup(STOP);
+        Serial.println("Initial Setup Complete");
         //autoTune(STOP);
     }
     return response;
@@ -189,17 +193,63 @@ void IQS7222::softReset(bool stopOrRestart)
   * @retval None.
   * @notes  None.
   */
-void IQS7222::printCounts(bool stopOrRestart)
+//void IQS7222::printCounts(bool stopOrRestart)
+//{
+//    uint8_t transferByte[10]; // Array to store the bytes transferred.
+//    readRandomBytes(CH0_COUNTS, 10, transferByte, STOP);
+//    for (const uint8_t &count : transferByte)
+//    {
+//        Serial.print(count);
+//        Serial.print(", ");
+//    }
+//}
+
+uint16_t IQS7222::readProductNumber(bool stopOrRestart)
 {
-    uint8_t transferByte[10]; // Array to store the bytes transferred.
-    readRandomBytes(CH0_COUNTS, 10, transferByte, STOP);
-    for (const uint8_t &count : transferByte)
-    {
-        Serial.print(count);
-        Serial.print(", ");
+    uint8_t transferByte[2]; // Array to store the bytes transferred.
+    readRandomBytes(0x00, 2, transferByte, stopOrRestart);
+    uint16_t data = (transferByte[1] << 8) + transferByte[0];
+    return data;
+}
+
+void IQS7222::readTest(const uint8_t length, uint16_t startRegister, bool stopOrRestart)
+{
+    uint8_t transferByte[20]; // Array to store the bytes transferred.
+    readRandomBytes(startRegister, length*2, transferByte, stopOrRestart);
+    for (size_t i = 0; i < length*2; i += 2)
+    { 
+        Serial.println((transferByte[i + 1] << 8) + transferByte[i]);
     }
 }
 
+void IQS7222::readSingleTest(uint16_t address, bool stopOrRestart)
+{
+    uint8_t transferByte[2];
+    readRandomBytes(address, 2, transferByte, stopOrRestart);
+    Serial.println((transferByte[1] << 8) + transferByte[0]);
+}
+
+void IQS7222::writeTest(uint16_t address, uint16_t data, bool stopOrRestart)
+{
+    uint8_t transferByte[2];
+    transferByte[0] = data & 0xFF;
+    transferByte[1] = (data >> 8) & 0xFF;
+    writeRandomBytes(address, 2, transferByte, stopOrRestart);
+}
+
+/**
+  * @name   toggleReady
+  * @brief  A method which toggles the READY pin of an IQS7222 device.
+  * @param  None.
+  * @retval None.
+  * @notes  Change pin to OUTPUT, pull LOW, delay, pull HIGH, change pin back to INPUT.
+  */
+
+
+void IQS7222::identifyGesture(bool stopOrRestart)
+{
+
+}
 
 
 /**************************************************************************************************************/
@@ -230,7 +280,7 @@ void IQS7222::readRandomBytes(uint16_t memoryAddress, uint8_t numBytes, uint8_t 
     Wire.beginTransmission(_deviceAddress);
     
     // Verifies if 8bit or 16bit address
-    if (memoryAddress > 0xFF)
+    if (memoryAddress <= 0xFF)
     {
         // Send a byte asking for the "memoryAddress" register 
         Wire.write(memoryAddress);
@@ -265,7 +315,7 @@ void IQS7222::writeRandomBytes(uint16_t memoryAddress, uint8_t numBytes, uint8_t
     // Select the device with the address of "_deviceAddress" and start communication.
     Wire.beginTransmission(_deviceAddress);
     // Verifies if 8bit or 16bit address
-    if (memoryAddress > 0xFF)
+    if (memoryAddress <= 0xFF)
     {
         // Send a byte asking for the "memoryAddress" register 
         Wire.write(memoryAddress);
@@ -287,6 +337,63 @@ void IQS7222::writeRandomBytes(uint16_t memoryAddress, uint8_t numBytes, uint8_t
 
 void IQS7222::initialSetup(bool stopOrRestart)
 {
+    uint8_t transferByte0[6] = { CYCLE_0_CONV_FREQ_FRAC, CYCLE_0_CONV_FREQ_PERIOD, CYCLE_0_SETTINGS, CYCLE_0_CTX_SELECT, CYCLE_0_IREF_0, CYCLE_0_IREF_1 };
+    writeRandomBytes(0x8000, 6, transferByte0, RESTART);
+    uint8_t transferByte1[6] = { CYCLE_1_CONV_FREQ_FRAC, CYCLE_1_CONV_FREQ_PERIOD, CYCLE_1_SETTINGS, CYCLE_1_CTX_SELECT, CYCLE_1_IREF_0, CYCLE_1_IREF_1 };
+    writeRandomBytes(0x8100, 6, transferByte1, RESTART);
+    uint8_t transferByte2[6] = { CYCLE_2_CONV_FREQ_FRAC, CYCLE_2_CONV_FREQ_PERIOD, CYCLE_2_SETTINGS, CYCLE_2_CTX_SELECT, CYCLE_2_IREF_0, CYCLE_2_IREF_1 };
+    writeRandomBytes(0x8200, 6, transferByte2, RESTART);
+    uint8_t transferByte3[6] = { CYCLE_3_CONV_FREQ_FRAC, CYCLE_3_CONV_FREQ_PERIOD, CYCLE_3_SETTINGS, CYCLE_3_CTX_SELECT, CYCLE_3_IREF_0, CYCLE_3_IREF_1 };
+    writeRandomBytes(0x8300, 6, transferByte3, RESTART);
+    uint8_t transferByte4[6] = { CYCLE_4_CONV_FREQ_FRAC, CYCLE_4_CONV_FREQ_PERIOD, CYCLE_4_SETTINGS, CYCLE_4_CTX_SELECT, CYCLE_4_IREF_0, CYCLE_4_IREF_1 };
+    writeRandomBytes(0x8400, 6, transferByte4, RESTART);
 
-}
+    uint8_t transferByte5[6] = { GLOBAL_CYCLE_SETUP_0,GLOBAL_CYCLE_SETUP_1, COARSE_DIVIDER_PRELOAD, FINE_DIVIDER_PRELOAD, COMPENSATION_PRELOAD_0, COMPENSATION_PRELOAD_1 };
+    writeRandomBytes(0x8500, 6, transferByte5, RESTART);
+    
+    uint8_t transferByte6[6] = { BUTTON_5_PROX_THRESHOLD, BUTTON_5_ENTER_EXIT, BUTTON_5_TOUCH_THRESHOLD, BUTTON_5_TOUCH_HYSTERESIS, BUTTON_5_PROX_EVENT_TIMEOUT, BUTTON_5_TOUCH_EVENT_TIMEOUT };
+    writeRandomBytes(0x9500, 6, transferByte6, RESTART);
+    uint8_t transferByte7[6] = { BUTTON_6_PROX_THRESHOLD, BUTTON_6_ENTER_EXIT, BUTTON_6_TOUCH_THRESHOLD, BUTTON_6_TOUCH_HYSTERESIS, BUTTON_6_PROX_EVENT_TIMEOUT, BUTTON_6_TOUCH_EVENT_TIMEOUT};
+    writeRandomBytes(0x9600, 6, transferByte7, RESTART);
+    uint8_t transferByte8[6] = { BUTTON_7_PROX_THRESHOLD, BUTTON_7_ENTER_EXIT, BUTTON_7_TOUCH_THRESHOLD, BUTTON_7_TOUCH_HYSTERESIS, BUTTON_7_PROX_EVENT_TIMEOUT, BUTTON_7_TOUCH_EVENT_TIMEOUT };
+    writeRandomBytes(0x9700, 6, transferByte8, RESTART);
+    uint8_t transferByte9[6] = { BUTTON_8_PROX_THRESHOLD, BUTTON_8_ENTER_EXIT, BUTTON_8_TOUCH_THRESHOLD, BUTTON_8_TOUCH_HYSTERESIS, BUTTON_8_PROX_EVENT_TIMEOUT, BUTTON_8_TOUCH_EVENT_TIMEOUT };
+    writeRandomBytes(0x9800, 6, transferByte9, RESTART); 
+    uint8_t transferByte10[6] = { BUTTON_9_PROX_THRESHOLD, BUTTON_9_ENTER_EXIT, BUTTON_9_TOUCH_THRESHOLD, BUTTON_9_TOUCH_HYSTERESIS, BUTTON_9_PROX_EVENT_TIMEOUT, BUTTON_9_TOUCH_EVENT_TIMEOUT };
+    writeRandomBytes(0x9900, 6, transferByte10, RESTART);
+
+    uint8_t transferByte11[12] = { CH0_SETUP_0, CH0_SETUP_1, CH0_ATI_SETTINGS_0, CH0_ATI_SETTINGS_1, CH0_MULTIPLIERS_0, CH0_MULTIPLIERS_1, CH0_ATI_COMPENSATION_0, CH0_ATI_COMPENSATION_1, CH0_REF_PTR_0, CH0_REF_PTR_1, CH0_REFMASK_0, CH0_REFMASK_1};
+    writeRandomBytes(0xA000, 12, transferByte11, RESTART);
+    uint8_t transferByte12[12] = { CH1_SETUP_0, CH1_SETUP_1, CH1_ATI_SETTINGS_0, CH1_ATI_SETTINGS_1, CH1_MULTIPLIERS_0, CH1_MULTIPLIERS_1, CH1_ATI_COMPENSATION_0, CH1_ATI_COMPENSATION_1, CH1_REF_PTR_0, CH1_REF_PTR_1, CH1_REFMASK_0, CH1_REFMASK_1 };
+    writeRandomBytes(0xA100, 12, transferByte12, RESTART);
+    uint8_t transferByte13[12] = { CH2_SETUP_0, CH2_SETUP_1, CH2_ATI_SETTINGS_0, CH2_ATI_SETTINGS_1, CH2_MULTIPLIERS_0, CH2_MULTIPLIERS_1, CH2_ATI_COMPENSATION_0, CH2_ATI_COMPENSATION_1, CH2_REF_PTR_0, CH2_REF_PTR_1, CH2_REFMASK_0, CH2_REFMASK_1 };
+    writeRandomBytes(0xA200, 12, transferByte13, RESTART);
+    uint8_t transferByte14[12] = { CH3_SETUP_0, CH3_SETUP_1, CH3_ATI_SETTINGS_0, CH3_ATI_SETTINGS_1, CH3_MULTIPLIERS_0, CH3_MULTIPLIERS_1, CH3_ATI_COMPENSATION_0, CH3_ATI_COMPENSATION_1, CH3_REF_PTR_0, CH3_REF_PTR_1, CH3_REFMASK_0, CH3_REFMASK_1 };
+    writeRandomBytes(0xA300, 12, transferByte14, RESTART);
+    uint8_t transferByte15[12] = { CH4_SETUP_0, CH4_SETUP_1, CH4_ATI_SETTINGS_0, CH4_ATI_SETTINGS_1, CH4_MULTIPLIERS_0, CH4_MULTIPLIERS_1, CH4_ATI_COMPENSATION_0, CH4_ATI_COMPENSATION_1, CH4_REF_PTR_0, CH4_REF_PTR_1, CH4_REFMASK_0, CH4_REFMASK_1 };
+    writeRandomBytes(0xA400, 12, transferByte15, RESTART);
+    uint8_t transferByte16[12] = { CH5_SETUP_0, CH5_SETUP_1, CH5_ATI_SETTINGS_0, CH5_ATI_SETTINGS_1, CH5_MULTIPLIERS_0, CH5_MULTIPLIERS_1, CH5_ATI_COMPENSATION_0, CH5_ATI_COMPENSATION_1, CH5_REF_PTR_0, CH5_REF_PTR_1, CH5_REFMASK_0, CH5_REFMASK_1 };
+    writeRandomBytes(0xA500, 12, transferByte16, RESTART);
+    uint8_t transferByte17[12] = { CH6_SETUP_0, CH6_SETUP_1, CH6_ATI_SETTINGS_0, CH6_ATI_SETTINGS_1, CH6_MULTIPLIERS_0, CH6_MULTIPLIERS_1, CH6_ATI_COMPENSATION_0, CH6_ATI_COMPENSATION_1, CH6_REF_PTR_0, CH6_REF_PTR_1, CH6_REFMASK_0, CH6_REFMASK_1 };
+    writeRandomBytes(0xA600, 12, transferByte17, RESTART);
+    uint8_t transferByte18[12] = { CH7_SETUP_0, CH7_SETUP_1, CH7_ATI_SETTINGS_0, CH7_ATI_SETTINGS_1, CH7_MULTIPLIERS_0, CH7_MULTIPLIERS_1, CH7_ATI_COMPENSATION_0, CH7_ATI_COMPENSATION_1, CH7_REF_PTR_0, CH7_REF_PTR_1, CH7_REFMASK_0, CH7_REFMASK_1 };
+    writeRandomBytes(0xA700, 12, transferByte18, RESTART);
+    uint8_t transferByte19[12] = { CH8_SETUP_0, CH8_SETUP_1, CH8_ATI_SETTINGS_0, CH8_ATI_SETTINGS_1, CH8_MULTIPLIERS_0, CH8_MULTIPLIERS_1, CH8_ATI_COMPENSATION_0, CH8_ATI_COMPENSATION_1, CH8_REF_PTR_0, CH8_REF_PTR_1, CH8_REFMASK_0, CH8_REFMASK_1 };
+    writeRandomBytes(0xA800, 12, transferByte19, RESTART);
+    uint8_t transferByte20[12] = { CH9_SETUP_0, CH9_SETUP_1, CH9_ATI_SETTINGS_0, CH9_ATI_SETTINGS_1, CH9_MULTIPLIERS_0, CH9_MULTIPLIERS_1, CH9_ATI_COMPENSATION_0, CH9_ATI_COMPENSATION_1, CH9_REF_PTR_0, CH9_REF_PTR_1, CH9_REFMASK_0, CH9_REFMASK_1 };
+    writeRandomBytes(0xA900, 12, transferByte20, RESTART);
+    
+    uint8_t transferByte21[4] = { COUNTS_BETA_FILTER, LTA_BETA_FILTER, LTA_FAST_BETA_FILTER, RESERVED_FILTER_0 };
+    writeRandomBytes(0xAA00, 4, transferByte21, RESTART);
+    
+    uint8_t transferByte22[20] = { SLIDER0SETUP_GENERAL, SLIDER0_LOWER_CAL, SLIDER0_UPPER_CAL, SLIDER0_BOTTOM_SPEED, SLIDER0_TOPSPEED_0, SLIDER0_TOPSPEED_1, SLIDER0_RESOLUTION_0, SLIDER0_RESOLUTION_1, SLIDER0_ENABLE_MASK_0_7, SLIDER0_ENABLE_MASK_8_9, SLIDER0_ENABLESTATUSLINK_0, SLIDER0_ENABLESTATUSLINK_1, SLIDER0_DELTA0_0, SLIDER0_DELTA0_1, SLIDER0_DELTA1_0, SLIDER0_DELTA1_1, SLIDER0_DELTA2_0, SLIDER0_DELTA2_1, SLIDER0_DELTA3_0, SLIDER0_DELTA3_1};
+    writeRandomBytes(0xB000, 20, transferByte22, RESTART);
+    uint8_t transferByte23[20] = { SLIDER1SETUP_GENERAL, SLIDER1_LOWER_CAL, SLIDER1_UPPER_CAL, SLIDER1_BOTTOM_SPEED, SLIDER1_TOPSPEED_0, SLIDER1_TOPSPEED_1, SLIDER1_RESOLUTION_0, SLIDER1_RESOLUTION_1, SLIDER1_ENABLE_MASK_0_7, SLIDER1_ENABLE_MASK_8_9, SLIDER1_ENABLESTATUSLINK_0, SLIDER1_ENABLESTATUSLINK_1, SLIDER1_DELTA0_0, SLIDER1_DELTA0_1, SLIDER1_DELTA1_0, SLIDER1_DELTA1_1, SLIDER1_DELTA2_0, SLIDER1_DELTA2_1, SLIDER1_DELTA3_0, SLIDER1_DELTA3_1 };
+    writeRandomBytes(0xB100, 20, transferByte23, RESTART);
+
+    uint8_t transferByte24[6] = { GPIO0_SETUP_0, GPIO0_SETUP_1, ENABLE_MASK_0_7, ENABLE_MASK_8_9, ENABLESTATUSLINK_0, ENABLESTATUSLINK_1 };
+    writeRandomBytes(0xC000, 6, transferByte24, RESTART);
+    uint8_t transferByte25[21] = { SYSTEM_CONTROL_0, SYSTEM_CONTROL_1, ATI_ERROR_TIMEOUT_0, ATI_ERROR_TIMEOUT_1, ATI_REPORT_RATE_0, ATI_REPORT_RATE_1, NORMAL_MODE_TIMEOUT_0, NORMAL_MODE_TIMEOUT_1, NORMAL_MODE_REPORT_RATE_0, NORMAL_MODE_REPORT_RATE_1, LP_MODE_TIMEOUT_0, LP_MODE_TIMEOUT_1, LP_MODE_REPORT_RATE_0, LP_MODE_REPORT_RATE_1, ULP_MODE_TIMEOUT_0, ULP_MODE_TIMEOUT_1, ULP_MODE_REPORT_RATE_0, ULP_MODE_REPORT_RATE_1, TOUCH_PROX_EVENT_MASK, POWER_ATI_EVENT_MASK, I2CCOMMS_0 };
+    writeRandomBytes(0xD0, 21, transferByte25, RESTART);
+}   
 

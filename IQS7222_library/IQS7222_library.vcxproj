@@ -143,9 +143,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="gestures.cpp" />
     <ClCompile Include="IQS7222.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="gestures.h" />
     <ClInclude Include="IQS7222_addresses.h" />
     <ClInclude Include="IQS7222.h" />
   </ItemGroup>
