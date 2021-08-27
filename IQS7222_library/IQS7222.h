@@ -79,10 +79,8 @@ public:
 	void autoTune(bool stopOrRestart);
 	void softReset(bool stopOrRestart);
 	void printCounts(bool stopOrRestart);
-	uint16_t readProductNumber(bool stopOrRestart);
 	void readTest(uint8_t length, uint16_t startRegister, bool stopOrRestart);
 	void readSingleTest(uint16_t address, bool stopOrRestart);
-	void writeTest(uint16_t address, uint16_t data, bool stopOrRestart);
 	void getTouchEvents(bool stopOrRestart);
 	void setEventMask(EVENT_MASK mask[], uint8_t numEvents, bool stopOrRestart);
 	void setInterface(INTERFACE_MODE mode, bool stopOrRestart);

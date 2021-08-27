@@ -226,14 +226,6 @@ void IQS7222::printCounts(bool stopOrRestart)
     Serial.println(transferBytes[8]);
 }
 
-uint16_t IQS7222::readProductNumber(bool stopOrRestart)
-{
-    uint8_t transferBytes[2]; // Array to store the bytes transferred.
-    readRandomBytes(0x00, 2, transferBytes, stopOrRestart);
-    uint16_t data = (transferBytes[1] << 8) + transferBytes[0];
-    return data;
-}
-
 void IQS7222::readTest(const uint8_t length, uint16_t startRegister, bool stopOrRestart)
 {
     uint8_t transferBytes[20]; // Array to store the bytes transferred.
@@ -257,41 +249,22 @@ void IQS7222::readSingleTest(uint16_t address, bool stopOrRestart)
     Serial.println(transferBytes[1], HEX);
 }
 
-void IQS7222::writeTest(uint16_t address, uint16_t data, bool stopOrRestart)
-{
-    uint8_t transferBytes[2];
-    transferBytes[0] = data & 0xFF;
-    transferBytes[1] = (data >> 8) & 0xFF;
-    writeRandomBytes(address, 2, transferBytes, stopOrRestart);
-}
-
 /**
   * @name   getTouchEvents
   * @brief  A method which reads the events flags 
   * @param  stopOrRestart -> A boolean which specifies whether the communication window should remain open or be closed after transfer.
   *                           False keeps it open, true closes it. Use the STOP and RESTART definitions.
   * @retval None.
-  * @notes  Change pin to OUTPUT, pull LOW, delay, pull HIGH, change pin back to INPUT.
+  * @notes  None.
   */
 void IQS7222::getTouchEvents(bool stopOrRestart)
 {
-    uint8_t transferBytes1[2];
-    readRandomBytes(EVENT_FLAGS, 2, transferBytes1, stopOrRestart);
-    Serial.println("Event Flags: ");
-    Serial.println(transferBytes1[0], BIN);
-    Serial.println(transferBytes1[1], BIN);
-    Serial.println((transferBytes1[1] << 8) + transferBytes1[0], BIN);
+    uint8_t transferBytes[2];
+    readRandomBytes(TOUCH_FLAGS, 2, transferBytes, stopOrRestart);
 
-    //uint8_t transferBytes[2];
-    //readRandomBytes(TOUCH_FLAGS, 2, transferBytes, stopOrRestart);
+    uint16_t byteData = (transferBytes[1] << 8) + transferBytes[0];
 
-    /*uint16_t byteData = (transferBytes[1] << 8) + transferBytes[0];
-    Serial.println("Touch Channel Flags: ");
-    Serial.println(transferBytes[0], BIN);
-    Serial.println(transferBytes[1], BIN);
-    Serial.println(byteData, BIN);
-
-    touch.flagByte = byteData;*/
+    touch.flagByte = byteData;
 }
 
 /**
@@ -302,7 +275,7 @@ void IQS7222::getTouchEvents(bool stopOrRestart)
   *         stopOrRestart -> A boolean which specifies whether the communication window should remain open or be closed after transfer.
   *                           False keeps it open, true closes it. Use the STOP and RESTART definitions.
   * @retval None.
-  * @notes  Change pin to OUTPUT, pull LOW, delay, pull HIGH, change pin back to INPUT.
+  * @notes  None.
   */
 void IQS7222::setEventMask(EVENT_MASK mask[], uint8_t numEvents, bool stopOrRestart)
 {
