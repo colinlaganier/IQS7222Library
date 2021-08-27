@@ -45,7 +45,8 @@ typedef union {
 		uint8_t ch8 : 1;
 		uint8_t ch9 : 1;
 		uint8_t reserved : 6;
-	};
+	} ;
+	//uint8_t channel_array[10]{ch0, ch1, ch2, ch3, ch4, ch5, ch6, ch7, ch8, ch9};
 } Touch_events;
 
 typedef enum {

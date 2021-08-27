@@ -199,8 +199,8 @@ void IQS7222::softReset(bool stopOrRestart)
   */
 void IQS7222::printCounts(bool stopOrRestart)
 {
-    uint8_t transferBytes[10]; // Array to store the bytes transferred.
-    readRandomBytes(CH0_COUNTS, 10, transferBytes, STOP);
+    uint8_t transferBytes[20]; // Array to store the bytes transferred.
+    readRandomBytes(CH0_COUNTS, 20, transferBytes, STOP);
    /* for (size_t i = 0; i < 9; i++)
     {
         Serial.print(transferBytes[i]);
@@ -208,22 +208,22 @@ void IQS7222::printCounts(bool stopOrRestart)
     
     Serial.println(transferBytes[9]);*/
     Serial.print("CH1:");
-    Serial.print(transferBytes[1]);
+    Serial.print((transferBytes[3] << 8) + transferBytes[2]);
     Serial.print(",");
     Serial.print("CH2:");
-    Serial.print(transferBytes[2]);
+    Serial.print((transferBytes[5] << 8) + transferBytes[4]);
     Serial.print(",");
     Serial.print("CH3:");
-    Serial.print(transferBytes[3]);
+    Serial.print((transferBytes[7] << 8) + transferBytes[6]);
     Serial.print(",");
     Serial.print("CH6:");
-    Serial.print(transferBytes[6]);
+    Serial.print((transferBytes[13] << 8) + transferBytes[12]);
     Serial.print(",");
     Serial.print("CH7:");
-    Serial.print(transferBytes[7]);
+    Serial.print((transferBytes[15] << 8) + transferBytes[14]);
     Serial.print(",");
     Serial.print("CH8:");
-    Serial.println(transferBytes[8]);
+    Serial.println((transferBytes[17] << 8) + transferBytes[16]);
 }
 
 void IQS7222::readTest(const uint8_t length, uint16_t startRegister, bool stopOrRestart)
@@ -251,7 +251,7 @@ void IQS7222::readSingleTest(uint16_t address, bool stopOrRestart)
 
 /**
   * @name   getTouchEvents
-  * @brief  A method which reads the events flags 
+  * @brief  A method which reads the events flags and sets the touch.flagByte
   * @param  stopOrRestart -> A boolean which specifies whether the communication window should remain open or be closed after transfer.
   *                           False keeps it open, true closes it. Use the STOP and RESTART definitions.
   * @retval None.
@@ -265,6 +265,15 @@ void IQS7222::getTouchEvents(bool stopOrRestart)
     uint16_t byteData = (transferBytes[1] << 8) + transferBytes[0];
 
     touch.flagByte = byteData;
+    
+    for (size_t i = 0; i < 10; i++)
+    {
+        if (touch.channel_array[i] == 1)
+        {
+            Serial.print((String)"ch" + i + ": " + touch.channel_array[i] + "; ");
+        }
+        
+    }
 }
 
 /**
