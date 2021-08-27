@@ -18,18 +18,12 @@
     <ClCompile Include="IQS7222.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="gestures.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="IQS7222.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="IQS7222_addresses.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="gestures.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
