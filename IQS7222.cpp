@@ -381,7 +381,7 @@ void IQS7222::ackowledgeEvent(bool stopOrRestart)
         }
         for (size_t i = 0; i < 10; i++)
         {
-            Serial.print((String)" CH" + i + ": " + event_channel[i])
+            Serial.print((String)" CH" + i + ": " + event_channel[i]);
         }
         Serial.println(" ");
     }
