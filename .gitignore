@@ -387,5 +387,11 @@ FodyWeavers.xsd
 .idea/
 *.sln.iml
 
+# Other Visual Studio Files 
+*.sln
+*.vcxproj
+*.vcxproj.filters
+
+
 # Project specific
 /IQS7222_library/leftovers.txt

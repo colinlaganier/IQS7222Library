@@ -19,6 +19,7 @@
 /*                                                CONSTRUCTORS                                                */
 /**************************************************************************************************************/
 IQS7222::IQS7222() {
+
 }
 
 /**************************************************************************************************************/
@@ -226,28 +227,6 @@ void IQS7222::printCounts(bool stopOrRestart)
     Serial.println((transferBytes[17] << 8) + transferBytes[16]);
 }
 
-void IQS7222::readTest(const uint8_t length, uint16_t startRegister, bool stopOrRestart)
-{
-    uint8_t transferBytes[20]; // Array to store the bytes transferred.
-    readRandomBytes(startRegister, length*2, transferBytes, stopOrRestart);
-    for (size_t i = 0; i < length*2; i += 2)
-    { 
-        Serial.println((transferBytes[i + 1] << 8) + transferBytes[i]);
-    }
-}
-
-void IQS7222::readSingleTest(uint16_t address, bool stopOrRestart)
-{
-    uint8_t transferBytes[2];
-    readRandomBytes(address, 2, transferBytes, stopOrRestart);
-    Serial.print("Data @0x");
-    Serial.print(address, HEX);
-    Serial.println(":");
-    Serial.print("0x");
-    Serial.println(transferBytes[0], HEX);
-    Serial.print("0x");
-    Serial.println(transferBytes[1], HEX);
-}
 
 /**
   * @name   getTouchEvents
@@ -266,14 +245,14 @@ void IQS7222::getTouchEvents(bool stopOrRestart)
 
     touch.flagByte = byteData;
     
-    for (size_t i = 0; i < 10; i++)
-    {
-        if (touch.channel_array[i] == 1)
-        {
-            Serial.print((String)"ch" + i + ": " + touch.channel_array[i] + "; ");
-        }
-        
-    }
+    //for (size_t i = 0; i < 10; i++)
+    //{
+    //    if (touch.channel_array[i] == 1)
+    //    {
+    //        Serial.print((String)"ch" + i + ": " + touch.channel_array[i] + "; ");
+    //    }
+    //    
+    //}
 }
 
 /**
@@ -360,6 +339,267 @@ uint16_t IQS7222::getTouchChannel(bool stopOrRestart)
     readRandomBytes(TOUCH_FLAGS, 2, transferBytes, stopOrRestart);
 
     return uint16_t((transferBytes[1] << 8) + transferBytes[0]);
+}
+
+/**
+  * @name   ackowledgeEvent
+  * @brief  A method which reads the events and touch channel flags and updates the relevant parameters when the RDY line is pulled down.
+  * @param  stopOrRestart -> A boolean which specifies whether the communication window should remain open or be closed after transfer.
+  *                           False keeps it open, true closes it. Use the STOP and RESTART definitions.
+  * @retval None.
+  * @notes  None.
+  */
+void IQS7222::ackowledgeEvent(bool stopOrRestart)
+{
+    uint8_t transferBytes[2] = { 0,0 };
+
+    readRandomBytes(EVENT_FLAGS, 1, transferBytes, RESTART);
+
+    if (transferBytes[0] & TOUCH)
+    {
+        readRandomBytes(TOUCH_FLAGS, 2, transferBytes, stopOrRestart);
+
+        uint16_t event_checking = (transferBytes[1] << 8) + transferBytes[0];
+        int index = 0;
+
+        while (index < 9) {
+            if (event_checking & 0x01) {
+                if (event_channel[index] == 1)
+                {
+                    Serial.println((String)"Channel " + index + " touch released");
+                    event_channel[index] = 0;
+                }
+                else
+                {
+                    Serial.println((String)"Channel " + index + "touch");
+                    event_channel[index] = 1;
+                }
+            }
+
+            index++;
+            event_checking = event_checking >> 1;
+        }
+        for (size_t i = 0; i < 10; i++)
+        {
+            Serial.print((String)" CH" + i + ": " + event_channel[i])
+        }
+        Serial.println(" ");
+    }
+}
+
+/**
+  * @name   verifyEvent
+  * @brief  A method which verifies if channels that are marked as active are still active after a period of time
+  * @param  stopOrRestart -> A boolean which specifies whether the communication window should remain open or be closed after transfer.
+  *                           False keeps it open, true closes it. Use the STOP and RESTART definitions.
+  * @retval None.
+  * @notes  None.
+  */
+void IQS7222::verifyEvent(bool stopOrRestart)
+{
+    uint8_t countBytes[20];
+    readRandomBytes(CH0_COUNTS, 20, countBytes, RESTART);
+    uint8_t LTABytes[20];
+    readRandomBytes(CH0_ATI, 20, countBytes, stopOrRestart);
+
+    // if no channel has a count value greater than what is expected for a touch then all of of the active channels are set to false
+    if (compareCounts(countBytes, LTABytes, 10, 0))
+    {
+        for (size_t i = 0; i < 10; i++)
+        {
+            Serial.println("Resetting channel touch flags");
+            event_channel[i] = false;
+        }
+    }
+
+}
+
+/**
+  * @name   setAtiValues
+  * @brief  A method which sets the ATI values (base or target) for a specific channel.
+  * @param  baseOrTarget -> A boolean which specifies whether the BASE value or the TARGET value should be change. True modifies the BASE
+  *                         and false modifies the TARGET value of the channel.
+  *         channel -> An integer value from 0 to 5 of the selected channel needed to be modified.
+  *         value -> An integer value, if BASE value between 0-31, if TARGET between 0-255.
+  *         stopOrRestart -> A boolean which specifies whether the communication window should remain open or be closed after transfer.
+  *                           False keeps it open, true closes it. Use the STOP and RESTART definitions.
+  * @retval None.
+  * @notes  None.
+  */
+void IQS7222::setAtiValues(bool baseOrTarget, uint8_t channel, uint8_t value, bool stopOrRestart)
+{
+    uint8_t transferBytes[2];
+    uint8_t channelAdd[6] = { 0x100, 0x600, 0x200, 0x700, 0x300, 0x800 };
+
+    uint16_t channelRegister = CH0_ATI | channelAdd[channel];
+
+    readRandomBytes(channelRegister, 2, transferBytes, RESTART);
+
+    if (baseOrTarget) 
+    {
+        if (value < 0x20)
+            transferBytes[0] = (value << 3);
+    } 
+    else 
+    {
+        if (value < 0x100)
+            transferBytes[1] = value;
+    }
+    
+    writeRandomBytes(channelRegister, 2, transferBytes, stopOrRestart);
+}
+
+/**
+  * @name   setAtiValues
+  * @brief  A method which sets the ATI values (base or target) for a specific channel.
+  * @param  baseOrTarget -> A boolean which specifies whether the BASE value or the TARGET value should be change. True modifies the BASE
+  *                         and false modifies the TARGET value of the channel.
+  *         channel -> An array of integer values from 0 to 5 of the selected channel needed to be modified.
+  *         numChannels -> Number of channels that are being modified at once.
+  *         value -> An integer value, if BASE value between 0-31, if TARGET between 0-255.
+  *         stopOrRestart -> A boolean which specifies whether the communication window should remain open or be closed after transfer.
+  *                           False keeps it open, true closes it. Use the STOP and RESTART definitions.
+  * @retval None.
+  * @notes  None.
+  */
+void IQS7222::setAtiValues(bool baseOrTarget, uint8_t channel[], uint8_t numChannels, uint8_t value, bool stopOrRestart)
+{
+    for (size_t i = 0; i < (numChannels - 1); i++)
+        setAtiValues(baseOrTarget, channel[i], value, RESTART);
+    setAtiValues(baseOrTarget, channel[numChannels-1], value, stopOrRestart);
+}
+
+/**
+  * @name   addTouch
+  * @brief  A method which adds the current touch channel to an array of previous events. 
+  * @param  None.
+  * @retval None.
+  * @notes  None.
+  */
+void IQS7222::addTouch(void)
+{
+    uint8_t transferBytes[1];
+    readRandomBytes(TOUCH_FLAGS, 1, transferBytes, RESTART);
+
+    for (size_t i = 0; i < 8; i++)
+    {
+        if (transferBytes[0] & (0x1 << i))
+        {
+            if (verifyPreviousTouch())
+            {
+                previousTouchIndex = (previousTouchIndex % 10);
+                previousTouchRear = previousTouchRear++;
+            }
+            previousTouch[previousTouchIndex] = channelTest[i];
+            previousTouchIndex++;
+        }
+    }
+
+    DIRECTION swipe = identifySwipe();
+}
+
+/**
+  * @name   clearTouch
+  * @brief  A method which clears the array of previous touch channel events by setting each element to CHANNELS::EMPTY (0).
+  * @param  None.
+  * @retval None.
+  * @notes  None.
+*/
+void IQS7222::clearTouch(void)
+{
+    for (auto& previous : previousTouch)
+        previous = CHANNELS::EMPTY;
+    previousTouchIndex = 0;
+    previousTouchRear = 0; 
+}
+
+
+void IQS7222::gestureUpdate(void)
+{
+    uint8_t transferBytes[12];
+    readRandomBytes(CH0_COUNTS, 12, transferBytes, RESTART);
+    
+    trackpadGestures.updateCount(transferBytes);
+}
+
+/**
+  * @name   identifySwipe
+  * @brief  A method which adds the current touch channel to an array of previous events.
+  * @param  None.
+  * @retval None.
+  * @notes  None.
+  */
+DIRECTION IQS7222::identifySwipe(void)
+{
+
+    if (previousTouch[previousTouchIndex - 1] == CHANNELS::CH5)
+    {
+        size_t indexFirst = (previousTouchIndex - 1);
+        while (indexFirst != previousTouchRear)
+        {
+            if (previousTouch[indexFirst] == CHANNELS::CH3)
+            {
+                size_t indexSecond = (indexFirst- 1);
+            }
+        }
+    }
+
+
+
+    //  Swipe UP left
+    if (previousTouch[previousTouchIndex - 1] == CHANNELS::CH5)
+    {
+        for (size_t i = (previousTouchIndex - 1); i >= 0; i-- )
+        {
+            if (previousTouch[i] == CHANNELS::CH3)
+            {
+                for (size_t j = (i - 1); j >= 0; j--)
+                    if (previousTouch[j] == CHANNELS::CH1)
+                        return DIRECTION::UP;
+            }
+        }
+    }
+    //  Swipe UP right
+    else if (previousTouch[previousTouchIndex - 1] == CHANNELS::CH6)
+    {
+        for (size_t i = (previousTouchIndex - 1); i >= 0; i--)
+        {
+            if (previousTouch[i] == CHANNELS::CH4)
+            {
+                for (size_t j = (i - 1); j >= 0; j--)
+                    if (previousTouch[j] == CHANNELS::CH2)
+                        return DIRECTION::UP;
+            }
+        }
+    }
+    // Swipe DOWN left
+    else if (previousTouch[previousTouchIndex - 1] == CHANNELS::CH1)
+    {
+        for (size_t i = (previousTouchIndex - 1); i >= 0; i--)
+        {
+            if (previousTouch[i] == CHANNELS::CH3)
+            {
+                for (size_t j = (i - 1); j >= 0; j--)
+                    if (previousTouch[j] == CHANNELS::CH5)
+                        return DIRECTION::DOWN;
+            }
+        }
+    }
+    //  Swipe DOWN right
+    else if (previousTouch[previousTouchIndex - 1] == CHANNELS::CH2)
+    {
+        for (size_t i = (previousTouchIndex - 1); i >= 0; i--)
+        {
+            if (previousTouch[i] == CHANNELS::CH4)
+            {
+                for (size_t j = (i - 1); j >= 0; j--)
+                    if (previousTouch[j] == CHANNELS::CH6)
+                        return DIRECTION::DOWN;
+            }
+        }
+    }
+
+
 }
 
 
@@ -488,7 +728,6 @@ void IQS7222::writeRandomBytes(uint16_t memoryAddress, uint8_t numBytes, uint8_t
  */
 void IQS7222::initialSetup(bool stopOrRestart)
 {
-    Serial.print("Writing initial Setup");
     uint8_t transferByte0[6] = { CYCLE_0_CONV_FREQ_FRAC, CYCLE_0_CONV_FREQ_PERIOD, CYCLE_0_SETTINGS, CYCLE_0_CTX_SELECT, CYCLE_0_IREF_0, CYCLE_0_IREF_1 };
     writeRandomBytes(CYCLE0_SETUP, 6, transferByte0, RESTART);
     uint8_t transferByte1[6] = { CYCLE_1_CONV_FREQ_FRAC, CYCLE_1_CONV_FREQ_PERIOD, CYCLE_1_SETTINGS, CYCLE_1_CTX_SELECT, CYCLE_1_IREF_0, CYCLE_1_IREF_1 };
@@ -559,4 +798,57 @@ void IQS7222::initialSetup(bool stopOrRestart)
     writeRandomBytes(CONTROL_SETTING, 21, transferByte25, RESTART);
 
 }   
+
+/**
+ * @name    compareCounts
+ * @brief   A methods which compares each channel's count to the channel's LTA.
+ * @param   counts      -> The array which stores the channels Counts bytes.
+ *          LTA         -> The array which stores the channels LTA bytes.
+ *          numChannels -> The number of channels that must be iterated upon.
+  *         startChannel-> Index of the first channel to verify;
+ * @retval  Returns true if there a channel activity greater than the LTA, returns false if not.
+ * @notes   None.
+ */
+bool IQS7222::compareCounts(uint8_t counts[], uint8_t LTA[], uint8_t numChannels, uint8_t startChannel)
+{
+    for (size_t i = 0; i < numChannels; i++)
+    {
+        if (event_channel[startChannel + i])
+        {
+            if ((((counts[1] << 8) + counts[0]) - ((LTA[1] << 8) + LTA[0])) > ACTIVITY_THRESHOLD)
+            {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+/**
+ * @name    verifyPreviousTouch
+ * @brief   A methods which 
+ * @param   None.
+ * @retval  Returns true if , returns false if not.
+ * @notes   This meht.
+ */
+bool IQS7222::verifyPreviousTouch(void)
+{
+    if (previousTouchRear == 0)
+    {
+        if (previousTouch[9] != EMPTY)
+            return true;
+        else
+            return false;
+    }
+    else if (previousTouchIndex == 10)
+        return true;
+    else
+    {
+        if (previousTouch[previousTouchRear - 1] != EMPTY)
+            return true;
+        else
+            return false;
+    }
+}
+
 
