@@ -17,10 +17,19 @@
 
 // Include Files
 #include "Arduino.h"
-//#include "Wire\src\Wire.h"
 #include <Wire.h>
 #include "IQS7222_addresses.h"
-//#include "gestures.h"
+
+// Include initilisation files depending on prototype
+#if defined(IQS7222_GALAXY)
+#include "IQS7222C_galaxy_init.h"
+#elif defined(IQS7222_MAGNETIC)
+#include "IQS7222C_magnetic_init.h"
+#elif defined(IQS266_GALAXY)
+#include "IQS266_galaxy_init.h"
+#elif defined(IQS266_MAGNETIC)
+#include "IQS266_magnetic_init.h"
+#endif
 
 // Public Global Definitions
 #define STOP true

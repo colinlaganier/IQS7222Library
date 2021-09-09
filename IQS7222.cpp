@@ -13,7 +13,6 @@
 
   // Include Files
 #include "IQS7222.h"
-#include "IQS7222C_arduino_init.h"
 
 /**************************************************************************************************************/
 /*                                                CONSTRUCTORS                                                */
@@ -519,7 +518,7 @@ void IQS7222::gestureUpdate(void)
     uint8_t transferBytes[12];
     readRandomBytes(CH0_COUNTS, 12, transferBytes, RESTART);
     
-    trackpadGestures.updateCount(transferBytes);
+    //trackpadGestures.updateCount(transferBytes);
 }
 
 /**
