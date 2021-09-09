@@ -25,10 +25,6 @@
 #include "init/IQS7222C_galaxy_init.h"
 #elif defined(IQS7222_MAGNETIC)
 #include "init/IQS7222C_magnetic_init.h"
-#elif defined(IQS266_GALAXY)
-#include "init/IQS266_galaxy_init.h"
-#elif defined(IQS266_MAGNETIC)
-#include "init/IQS266_magnetic_init.h"
 #endif
 
 // Public Global Definitions
