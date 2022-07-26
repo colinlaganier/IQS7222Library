@@ -8,4 +8,4 @@ C++ drivers to use the Azoteq IQS7222 ProxFusion sensor for capacitive sensing a
 
 ## Libraries
 
--Arduino [Wire.h Library](https://github.com/esp8266/Arduino/blob/master/libraries/Wire/Wire.h)
+-Arduino Wire.h [Library](https://github.com/esp8266/Arduino/blob/master/libraries/Wire/Wire.h)
